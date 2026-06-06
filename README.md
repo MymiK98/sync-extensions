@@ -1,5 +1,9 @@
 # sync-extensions
 
+> 📌 **AI로 개인이 사용하는 Claude Code 스킬을 정리·관리하는 개인용 repository입니다.**
+> A personal repository for curating and managing one's own Claude Code skills,
+> built and maintained with the help of AI.
+
 One-command sync of a curated Claude Code stack — plugins **and** standalone
 skills — across machines, from a single manifest.
 
