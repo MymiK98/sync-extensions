@@ -4,8 +4,13 @@
 > A personal repository for curating and managing one's own Claude Code skills,
 > built and maintained with the help of AI.
 
-One-command sync of a curated Claude Code stack — plugins **and** standalone
-skills — across machines, from a single manifest.
+A personal **skill warehouse** for Claude Code. Two ways to use it:
+
+- **Sync everything** — `bootstrap.sh` / `/sync-extensions` installs the whole
+  curated stack at once.
+- **Pick & choose (à la carte)** — `use.sh` lists every available skill and lets
+  you install or remove them one at a time, including your own skills stored in
+  `library/`.
 
 Keeps these installed and up to date:
 
@@ -56,6 +61,39 @@ Then **restart Claude Code**. After that, re-sync anytime with `/sync-extensions
 - **karpathy**: verifies the `karpathy-guidelines` skill is present (auto-loads
   via the plugin system; no mutation).
 
+## Pick & use individual skills (à la carte)
+
+Instead of installing everything, select what you want:
+
+```bash
+bash use.sh                  # list the whole catalog (● on / ○ off)
+bash use.sh add caveman      # install one
+bash use.sh add grill-me handoff   # install several
+bash use.sh remove caveman   # remove one
+bash use.sh installed        # show only what's currently on
+```
+
+The catalog merges three sources automatically:
+
+| Type | Where it comes from | `add` does |
+|---|---|---|
+| `plugin` | `skill/manifest.json` → `plugins[]` | adds marketplace if needed, `claude plugin install` |
+| `standalone` | `manifest.json` → `standalone_skills.repos[]` | `npx skills@latest add <repo>` |
+| `local` | `library/<id>/SKILL.md` (your own) | symlinks into `~/.claude/skills` |
+
+Restart Claude Code after installing. Removing a `local`/`standalone` skill only
+unlinks it from `~/.claude/skills`; the warehouse copy is never deleted.
+
+## Personal warehouse (`library/`)
+
+Store your own skills in `library/<name>/SKILL.md` — they appear in the catalog
+as type `local` and install individually with `use.sh add <name>`. See
+[`library/README.md`](library/README.md) and the `example-hello` template.
+
+Author a new one fast with the bundled skill-creator: ask Claude to
+"create a skill" (the `skill-creator` plugin), then move the result into
+`library/` and `bash publish.sh`.
+
 ## Adding a skill / plugin and pushing it to this repo
 
 The **live** copy at `~/.claude/skills/sync-extensions/manifest.json` is what the
@@ -93,13 +131,19 @@ On other machines: `git pull`, then re-run `bash bootstrap.sh` (or
 ## Layout
 ```
 sync-extensions/
-├── bootstrap.sh           # fresh-machine installer (repo -> live)
+├── bootstrap.sh           # fresh-machine installer (repo -> live, installs ALL)
+├── use.sh                 # à la carte: list / add / remove individual skills
 ├── publish.sh             # snapshot live state back into repo + push
 ├── README.md
-├── skill/                 # the skill (deployed to ~/.claude/skills/sync-extensions)
+├── bin/
+│   └── catalog.py         # merged catalog + install-status engine
+├── skill/                 # the sync-extensions skill (deployed to ~/.claude/skills)
 │   ├── SKILL.md
 │   ├── manifest.json      # canonical asset list — edit this
 │   └── scripts/sync.sh
+├── library/               # YOUR personal skill warehouse (type: local)
+│   ├── README.md
+│   └── example-hello/SKILL.md
 └── agents-seed/           # non-interactive seed for standalone skills
     ├── .skill-lock.json
     └── skills/…
