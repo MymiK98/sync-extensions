@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
-# sync-extensions — bootstrap installer for a fresh machine.
-#
-# Installs the sync-extensions skill into ~/.claude/skills, seeds the standalone
-# skills (mattpocock + find-skills) into ~/.agents so their update runs
-# non-interactively, then runs a full sync (marketplaces, plugins, caveman/karpathy
-# basic setup, standalone skills).
+# Warehouse bootstrap for a fresh machine.
+# Installs ALL skills stored in this repo (skills/*) into ~/.claude/skills, then
+# runs each skill's setup. For sync-extensions that means seeding the standalone
+# skills non-interactively and running a full sync.
 #
 # Usage:
-#   bash bootstrap.sh             # install + seed + full sync
-#   bash bootstrap.sh --no-sync   # install + seed only, skip the sync run
+#   bash bootstrap.sh             # install all warehouse skills + run setup
+#   bash bootstrap.sh --no-sync   # install/link only, skip sync-extensions sync
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 SKILLS_DIR="$CLAUDE_DIR/skills"
 AGENTS_DIR="$HOME/.agents"
+SEEDS="$HERE/seeds/agents"
 DO_SYNC=1
 [ "${1:-}" = "--no-sync" ] && DO_SYNC=0
 
-say() { printf '\n\033[1m%s\033[0m\n' "$*"; }
-ok()  { printf '  \033[32m✓\033[0m %s\n' "$*"; }
+say(){ printf '\n\033[1m%s\033[0m\n' "$*"; }
+ok(){ printf '  \033[32m✓\033[0m %s\n' "$*"; }
 warn(){ printf '  \033[33m!\033[0m %s\n' "$*"; }
 
 # ---------- preflight ----------
@@ -34,54 +33,40 @@ if command -v node >/dev/null 2>&1; then
 fi
 [ "$MISS" = "1" ] && { echo; echo "Install missing prerequisites and re-run."; exit 1; }
 
-# ---------- 1. install the skill ----------
-say "installing skill -> $SKILLS_DIR/sync-extensions"
-mkdir -p "$SKILLS_DIR"
-rm -rf "$SKILLS_DIR/sync-extensions"
-cp -R "$HERE/skill" "$SKILLS_DIR/sync-extensions"
-chmod +x "$SKILLS_DIR/sync-extensions/scripts/sync.sh"
-ok "skill files copied"
+# ---------- 1. link every warehouse skill ----------
+say "installing all warehouse skills"
+bash "$HERE/install.sh" all
 
-# ---------- 2. seed standalone skills (non-interactive) ----------
-say "seeding standalone skills -> $AGENTS_DIR"
-mkdir -p "$AGENTS_DIR/skills"
-for d in "$HERE"/agents-seed/skills/*/; do
-  name="$(basename "$d")"
-  if [ -e "$AGENTS_DIR/skills/$name" ]; then
-    ok "$name already present (kept)"
+# ---------- 2. sync-extensions setup: seed standalone skills ----------
+if [ -d "$SEEDS" ]; then
+  say "seeding standalone skills (sync-extensions) -> $AGENTS_DIR"
+  mkdir -p "$AGENTS_DIR/skills"
+  for d in "$SEEDS"/skills/*/; do
+    name="$(basename "$d")"
+    if [ -e "$AGENTS_DIR/skills/$name" ]; then ok "$name present (kept)"
+    else cp -R "$d" "$AGENTS_DIR/skills/$name"; ok "$name seeded"; fi
+  done
+  if [ -f "$AGENTS_DIR/.skill-lock.json" ]; then
+    warn ".skill-lock.json exists — kept"
   else
-    cp -R "$d" "$AGENTS_DIR/skills/$name"
-    ok "$name seeded"
+    cp "$SEEDS/.skill-lock.json" "$AGENTS_DIR/.skill-lock.json"; ok ".skill-lock.json seeded"
   fi
-done
-# lock: only place ours if target has none (never clobber an existing lock)
-if [ -f "$AGENTS_DIR/.skill-lock.json" ]; then
-  warn ".skill-lock.json exists — kept (run 'npx skills@latest update' to refresh)"
-else
-  cp "$HERE/agents-seed/.skill-lock.json" "$AGENTS_DIR/.skill-lock.json"
-  ok ".skill-lock.json seeded"
+  # link standalone skills into ~/.claude/skills
+  for d in "$AGENTS_DIR"/skills/*/; do
+    name="$(basename "$d")"; link="$SKILLS_DIR/$name"
+    if [ -L "$link" ] || [ -e "$link" ]; then ok "link $name exists"
+    else ln -s "../../.agents/skills/$name" "$link"; ok "linked $name"; fi
+  done
 fi
-# symlink standalone skills into ~/.claude/skills so Claude Code loads them
-for d in "$AGENTS_DIR"/skills/*/; do
-  name="$(basename "$d")"
-  link="$SKILLS_DIR/$name"
-  if [ -L "$link" ] || [ -e "$link" ]; then
-    ok "link $name exists"
-  else
-    ln -s "../../.agents/skills/$name" "$link"
-    ok "linked $name"
-  fi
-done
 
-# ---------- 3. full sync ----------
-if [ "$DO_SYNC" = "1" ]; then
-  say "running full sync"
+# ---------- 3. run sync-extensions full sync ----------
+if [ "$DO_SYNC" = "1" ] && [ -f "$SKILLS_DIR/sync-extensions/scripts/sync.sh" ]; then
+  say "running sync-extensions full sync"
   echo "  NOTE: 'claude plugin marketplace add' may prompt to trust each new repo"
   echo "        (one-time, ~5 approvals on a fresh machine)."
   bash "$SKILLS_DIR/sync-extensions/scripts/sync.sh"
 else
-  say "skipped sync (--no-sync). Run later:"
-  echo "  bash $SKILLS_DIR/sync-extensions/scripts/sync.sh"
+  say "skipped sync (--no-sync or sync-extensions not linked)"
 fi
 
-say "done — RESTART Claude Code to load plugins/skills."
+say "done — RESTART Claude Code to load skills."
