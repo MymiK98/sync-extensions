@@ -1,4 +1,4 @@
-# sync-extensions
+# claude-skill-warehouse
 
 > 📌 **AI로 개인이 사용하는 Claude Code 스킬을 정리·관리하는 개인용 repository입니다.**
 > A personal repository for storing and managing the Claude Code skills I build,
@@ -49,8 +49,8 @@ On another machine: `git pull`, then `bash install.sh add <name>` (or
 ## Fresh machine (install everything)
 
 ```bash
-git clone https://github.com/MymiK98/sync-extensions.git
-cd sync-extensions
+git clone https://github.com/MymiK98/claude-skill-warehouse.git
+cd claude-skill-warehouse
 bash bootstrap.sh
 ```
 `bootstrap.sh`: preflight → link all warehouse skills → seed standalone skills
@@ -87,7 +87,7 @@ To change the payload, edit `skills/sync-extensions/manifest.json`, run
 
 ## Layout
 ```
-sync-extensions/
+claude-skill-warehouse/
 ├── README.md
 ├── bootstrap.sh        # fresh machine: install all warehouse skills + setup
 ├── install.sh          # pick & install/remove individual stored skills
