@@ -52,13 +52,31 @@ Then **restart Claude Code**. After that, re-sync anytime with `/sync-extensions
 - **karpathy**: verifies the `karpathy-guidelines` skill is present (auto-loads
   via the plugin system; no mutation).
 
-## Customizing the list
-Edit `skill/manifest.json` (or, once installed,
-`~/.claude/skills/sync-extensions/manifest.json`):
-- new plugin → add to `marketplaces` (if a new repo) and `plugins`
-- new standalone skill → add to `standalone_skills.repos`
+## Adding a skill / plugin and pushing it to this repo
 
-Then re-run the sync.
+The **live** copy at `~/.claude/skills/sync-extensions/manifest.json` is what the
+sync actually reads. Workflow:
+
+1. **Edit the live manifest** —
+   `~/.claude/skills/sync-extensions/manifest.json`:
+   - new plugin → add to `marketplaces` (if a new repo) and `plugins`
+   - new standalone skill → add to `standalone_skills.repos`
+2. **Apply it** — run `/sync-extensions` (installs the new asset locally).
+3. **Push it to git** — from the repo, run:
+   ```bash
+   bash publish.sh "feat: add <name>"
+   ```
+   `publish.sh` snapshots the live state back into the bundle
+   (`skill/` + `agents-seed/`) and pushes. New standalone skills installed into
+   `~/.agents` are captured automatically — no manual copying.
+
+On other machines: `git pull`, then re-run `bash bootstrap.sh` (or
+`/sync-extensions`) to pick up the new asset.
+
+### publish.sh flags
+- `bash publish.sh` — auto commit message + push
+- `bash publish.sh "msg"` — custom message + push
+- `bash publish.sh --no-push "msg"` — commit only
 
 ## Gotchas
 - **Marketplace trust prompts**: `claude plugin marketplace add` asks to trust
@@ -71,7 +89,8 @@ Then re-run the sync.
 ## Layout
 ```
 sync-extensions/
-├── bootstrap.sh           # fresh-machine installer
+├── bootstrap.sh           # fresh-machine installer (repo -> live)
+├── publish.sh             # snapshot live state back into repo + push
 ├── README.md
 ├── skill/                 # the skill (deployed to ~/.claude/skills/sync-extensions)
 │   ├── SKILL.md
