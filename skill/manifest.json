@@ -1,0 +1,26 @@
+{
+  "_comment": "Canonical list of Claude Code plugins + standalone skills that sync-extensions keeps installed and up to date. Edit this file to add/remove items, then run the skill.",
+  "marketplaces": [
+    { "name": "karpathy-skills", "repo": "forrestchang/andrej-karpathy-skills" },
+    { "name": "caveman", "repo": "JuliusBrussee/caveman" },
+    { "name": "claude-video", "repo": "bradautomates/claude-video" },
+    { "name": "understand-anything", "repo": "Lum1104/Understand-Anything" },
+    { "name": "claude-plugins-official", "repo": "anthropics/claude-plugins-official" }
+  ],
+  "plugins": [
+    { "name": "andrej-karpathy-skills", "marketplace": "karpathy-skills", "provides": "karpathy-guidelines" },
+    { "name": "caveman", "marketplace": "caveman", "provides": "caveman" },
+    { "name": "watch", "marketplace": "claude-video", "provides": "claude-video" },
+    { "name": "understand-anything", "marketplace": "understand-anything", "provides": "understand-anything" },
+    { "name": "superpowers", "marketplace": "claude-plugins-official", "provides": "superpowers" },
+    { "name": "skill-creator", "marketplace": "claude-plugins-official", "provides": "skill-creator" }
+  ],
+  "standalone_skills": {
+    "cli": "skills",
+    "note": "Installed via the vercel-labs 'skills' CLI (npx skills@latest). Tracked in ~/.agents/.skill-lock.json.",
+    "repos": [
+      { "repo": "mattpocock/skills", "skills": ["grill-me", "grill-with-docs", "handoff", "improve-codebase-architecture"] },
+      { "repo": "vercel-labs/skills", "skills": ["find-skills"] }
+    ]
+  }
+}

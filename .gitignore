@@ -1,0 +1,7 @@
+# OS / editor cruft
+.DS_Store
+*.swp
+*~
+
+# never commit a machine-specific lock backup
+agents-seed/.skill-lock.json.bak
