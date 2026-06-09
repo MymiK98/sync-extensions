@@ -68,12 +68,13 @@ warehouse entries):
 |---|---|---|---|
 | `anthropics/claude-plugins-official` | skill-creator | plugin | **base** |
 | `forrestchang/andrej-karpathy-skills` | karpathy-guidelines | plugin | **base** |
+| `JuliusBrussee/caveman` | caveman (+ hooks, statusline, level=full) | plugin | **base** |
+| `chopratejas/headroom` | headroom (token-compression hooks + CLI) | plugin | **base** |
 | `vercel-labs/skills` | find-skills | standalone | **base** |
-| `JuliusBrussee/caveman` | caveman (+ hooks, statusline, level=full) | plugin | optional |
-| `Lum1104/Understand-Anything` | understand-anything | plugin | optional |
-| `mattpocock/skills` | grill-me, grill-with-docs, handoff, improve-codebase-architecture | standalone | optional |
+| `mattpocock/skills` | grill-me, grill-with-docs, handoff | standalone | optional |
+| `Lum1104/Understand-Anything` | understand-anything | plugin | extra |
 | `bradautomates/claude-video` | watch (claude-video) | plugin | extra |
-| `chopratejas/headroom` | headroom (token-compression hooks + CLI) | plugin | extra |
+| `mattpocock/skills` | improve-codebase-architecture | standalone | extra |
 
 To change the payload, edit `skills/sync-extensions/manifest.json`, run
 `/sync-extensions`, then commit with git (owner only).
@@ -85,8 +86,8 @@ selected. Manage selections — which persist in
 `~/.claude/.sync-extensions-selection.json` and survive future syncs:
 ```bash
 bash skills/sync-extensions/scripts/sync.sh --check               # show groups + current selection
-bash skills/sync-extensions/scripts/sync.sh --enable watch,headroom  # turn extras on (persists)
-bash skills/sync-extensions/scripts/sync.sh --disable caveman        # turn an optional off (persists)
+bash skills/sync-extensions/scripts/sync.sh --enable understand-anything,watch  # turn extras on (persists)
+bash skills/sync-extensions/scripts/sync.sh --disable mattpocock-grill           # turn an optional off (persists)
 bash skills/sync-extensions/scripts/sync.sh --all                  # include everything this run
 bash skills/sync-extensions/scripts/sync.sh --base-only            # base assets only this run
 ```
