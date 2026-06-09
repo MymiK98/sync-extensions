@@ -322,7 +322,10 @@ else
       record "$name" "$priority" "update" "$(done_state updated)"
     else
       echo "  [absent]  $name ($repo) -> add ($priority)"
-      if run npx -y skills@latest add "$repo"; then
+      # Pass --skill so repos sharing one source (e.g. mattpocock/skills split
+      # into grill + arch entries) install only their own subset, honoring
+      # per-entry priority. A whole-repo add would pull deselected siblings.
+      if run npx -y skills@latest add "$repo" --skill "$skills"; then
         record "$name" "$priority" "add" "$(done_state installed)"
       else
         record "$name" "$priority" "add" "failed"

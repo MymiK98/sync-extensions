@@ -11,17 +11,18 @@
   "plugins": [
     { "name": "skill-creator", "marketplace": "claude-plugins-official", "provides": "skill-creator", "priority": "base" },
     { "name": "andrej-karpathy-skills", "marketplace": "karpathy-skills", "provides": "karpathy-guidelines", "priority": "base" },
-    { "name": "caveman", "marketplace": "caveman", "provides": "caveman", "priority": "optional", "default": true },
-    { "name": "understand-anything", "marketplace": "understand-anything", "provides": "understand-anything", "priority": "optional", "default": true },
-    { "name": "watch", "marketplace": "claude-video", "provides": "claude-video", "priority": "extra", "default": false },
-    { "name": "headroom", "marketplace": "headroom-marketplace", "provides": "headroom", "priority": "extra", "default": false }
+    { "name": "caveman", "marketplace": "caveman", "provides": "caveman", "priority": "base" },
+    { "name": "headroom", "marketplace": "headroom-marketplace", "provides": "headroom", "priority": "base" },
+    { "name": "understand-anything", "marketplace": "understand-anything", "provides": "understand-anything", "priority": "extra", "default": false },
+    { "name": "watch", "marketplace": "claude-video", "provides": "claude-video", "priority": "extra", "default": false }
   ],
   "standalone_skills": {
     "cli": "skills",
     "note": "Installed via the vercel-labs 'skills' CLI (npx skills@latest). Tracked in ~/.agents/.skill-lock.json. Each repo carries its own priority.",
     "repos": [
       { "name": "find-skills", "repo": "vercel-labs/skills", "skills": ["find-skills"], "priority": "base" },
-      { "name": "mattpocock-skills", "repo": "mattpocock/skills", "skills": ["grill-me", "grill-with-docs", "handoff", "improve-codebase-architecture"], "priority": "optional", "default": true }
+      { "name": "mattpocock-grill", "repo": "mattpocock/skills", "skills": ["grill-me", "grill-with-docs", "handoff"], "priority": "optional", "default": true },
+      { "name": "mattpocock-arch", "repo": "mattpocock/skills", "skills": ["improve-codebase-architecture"], "priority": "extra", "default": false }
     ]
   }
 }
