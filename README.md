@@ -64,19 +64,34 @@ A one-command sync of a curated Claude Code stack. It keeps these installed and
 current (this is the skill's **payload**, managed via its `manifest.json` — not
 warehouse entries):
 
-| Source repo | Asset | Mechanism |
-|---|---|---|
-| `JuliusBrussee/caveman` | caveman (+ hooks, statusline, level=full) | plugin |
-| `anthropics/claude-plugins-official` | skill-creator | plugin |
-| `Lum1104/Understand-Anything` | understand-anything | plugin |
-| `forrestchang/andrej-karpathy-skills` | karpathy-guidelines | plugin |
-| `bradautomates/claude-video` | watch (claude-video) | plugin |
-| `chopratejas/headroom` | headroom (token-compression hooks + CLI) | plugin |
-| `mattpocock/skills` | grill-me, grill-with-docs, handoff, improve-codebase-architecture | standalone |
-| `vercel-labs/skills` | find-skills | standalone |
+| Source repo | Asset | Mechanism | Priority |
+|---|---|---|---|
+| `anthropics/claude-plugins-official` | skill-creator | plugin | **base** |
+| `forrestchang/andrej-karpathy-skills` | karpathy-guidelines | plugin | **base** |
+| `vercel-labs/skills` | find-skills | standalone | **base** |
+| `JuliusBrussee/caveman` | caveman (+ hooks, statusline, level=full) | plugin | optional |
+| `Lum1104/Understand-Anything` | understand-anything | plugin | optional |
+| `mattpocock/skills` | grill-me, grill-with-docs, handoff, improve-codebase-architecture | standalone | optional |
+| `bradautomates/claude-video` | watch (claude-video) | plugin | extra |
+| `chopratejas/headroom` | headroom (token-compression hooks + CLI) | plugin | extra |
 
 To change the payload, edit `skills/sync-extensions/manifest.json`, run
 `/sync-extensions`, then commit with git (owner only).
+
+### Asset priorities (base / optional / extra)
+Each asset has a `priority`. **base** always installs (mandatory). **optional**
+(default-on) and **extra** (default-off, for heavy/niche assets) install only when
+selected. Manage selections — which persist in
+`~/.claude/.sync-extensions-selection.json` and survive future syncs:
+```bash
+bash skills/sync-extensions/scripts/sync.sh --check               # show groups + current selection
+bash skills/sync-extensions/scripts/sync.sh --enable watch,headroom  # turn extras on (persists)
+bash skills/sync-extensions/scripts/sync.sh --disable caveman        # turn an optional off (persists)
+bash skills/sync-extensions/scripts/sync.sh --all                  # include everything this run
+bash skills/sync-extensions/scripts/sync.sh --base-only            # base assets only this run
+```
+A run ends with a **verification summary** (per-asset action/state + warnings) and
+exits non-zero only if a base asset fails.
 
 ### Basic setup the sync performs
 - **caveman**: idempotent hook installer (SessionStart + UserPromptSubmit hooks,
@@ -90,6 +105,14 @@ To change the payload, edit `skills/sync-extensions/manifest.json`, run
 ## Prerequisites
 - [Claude Code](https://claude.com/claude-code) (`claude` on PATH)
 - Node.js ≥ 18 (provides `npx`) · Python 3 · git
+
+## Cross-platform
+Works on **Linux**, **macOS** (including Apple Silicon / M1 — the sync searches
+`/opt/homebrew/bin` and npm-global dirs for the `headroom` CLI), and **Windows**
+via **Git Bash or WSL**. Where symlinks aren't permitted (Windows without
+Developer Mode), `install.sh`/`bootstrap.sh` fall back to copying the skill
+folder. `.gitattributes` enforces LF endings so scripts don't break on Windows
+checkout, and all scripts honor `CLAUDE_CONFIG_DIR` and tolerate paths with spaces.
 
 ## Layout
 ```

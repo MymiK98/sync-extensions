@@ -1,0 +1,9 @@
+# Normalize line endings so Windows (Git Bash/WSL) checkouts don't corrupt
+# shell scripts. CRLF on a `#!/usr/bin/env bash` + `set -uo pipefail` script
+# makes bash fail with cryptic errors.
+* text=auto eol=lf
+*.sh text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.png binary

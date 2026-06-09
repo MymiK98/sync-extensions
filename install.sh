@@ -19,6 +19,23 @@ command -v "$PY" >/dev/null || { echo "python3 required"; exit 1; }
 ok(){ printf '  \033[32m✓\033[0m %s\n' "$*"; }
 warn(){ printf '  \033[33m!\033[0m %s\n' "$*"; }
 
+detect_os() { # -> linux | macos | windows
+  case "${OSTYPE:-$(uname -s 2>/dev/null)}" in
+    darwin*|Darwin*) echo macos ;;
+    msys*|cygwin*|mingw*|MINGW*|MSYS*|win32) echo windows ;;
+    *) echo linux ;;
+  esac
+}
+
+# safe_link <link> <target>: symlink target at link; if symlinks are unsupported
+# (Windows without Developer Mode) fall back to a recursive copy.
+safe_link() {
+  local link="$1" target="$2"
+  if ln -s "$target" "$link" 2>/dev/null; then return 0; fi
+  warn "symlink unsupported here — copying instead (edits won't auto-track the repo)"
+  cp -R "$target" "$link"
+}
+
 add_one() {
   local id="$1" spec
   spec="$("$PY" "$CAT" get "$id")" || { warn "unknown skill: $id (see: install.sh list)"; return 1; }
@@ -26,8 +43,8 @@ add_one() {
   mkdir -p "$SKILLS_DIR"
   local link="$SKILLS_DIR/$id" target="$HERE/$SKILLPATH"
   if [ -L "$link" ]; then ok "$id already linked"
-  elif [ -e "$link" ]; then warn "$link exists and is not a symlink — left in place"; return 1
-  else ln -s "$target" "$link" && ok "installed $id -> $link"; fi
+  elif [ -e "$link" ]; then ok "$id already installed (copied — Windows fallback)"
+  else safe_link "$link" "$target" && ok "installed $id -> $link"; fi
   # per-skill setup hint
   if [ "$id" = "sync-extensions" ]; then
     echo "      → run '/sync-extensions' (or bash bootstrap.sh) to install its payload"
@@ -37,6 +54,9 @@ add_one() {
 remove_one() {
   local id="$1" link="$SKILLS_DIR/$1"
   if [ -L "$link" ]; then rm "$link" && ok "uninstalled $id (warehouse copy kept)"
+  elif [ -d "$link" ] && [ "${link#"$SKILLS_DIR"/}" = "$id" ]; then
+    # copied install (Windows fallback) — safe to remove: lives under $SKILLS_DIR
+    rm -rf "$link" && ok "uninstalled $id (copied install removed; warehouse copy kept)"
   elif [ -e "$link" ]; then warn "$link is not a symlink — left in place"
   else ok "$id not installed"; fi
 }

@@ -8,3 +8,10 @@ publish.sh
 
 # never commit a machine-specific lock backup
 seeds/agents/.skill-lock.json.bak
+
+# python bytecode
+__pycache__/
+*.pyc
+
+# local handoff / patch staging from ultraplan sessions
+uPlan/

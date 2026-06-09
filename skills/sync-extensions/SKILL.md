@@ -17,20 +17,43 @@ manifest. Two install mechanisms are handled:
 The canonical list lives in `manifest.json` (next to this file). Edit it to
 add/remove items.
 
+## Asset priorities (base / optional / extra)
+
+Every asset in `manifest.json` carries a `priority`:
+
+- **base** — mandatory, **always** installed regardless of selection.
+- **optional** — installed when selected; `default: true` ⇒ on until the user
+  deselects it.
+- **extra** — installed when selected; `default: false` ⇒ off until the user
+  enables it (use for heavy/niche assets, e.g. headroom's torch/transformers).
+
+User choices persist in `$CLAUDE_CONFIG_DIR/.sync-extensions-selection.json`
+(default `~/.claude/...`). They override the manifest `default` and survive
+future syncs. Manage them with `--enable`/`--disable` (see below); base is never
+affected.
+
 ## How to run
 
-Always **dry-run first**, show the user the planned actions, then run for real.
+Recommended flow: **report → ask the user → enable/disable → dry-run → full sync.**
 
 ```bash
-# 1. preview — prints every command, executes nothing
+# 1. state + priority groups + current selection (no changes made)
+bash "$CLAUDE_PLUGIN_ROOT/scripts/sync.sh" --check        # alias: --list
+
+# 2. record the user's optional/extra choices (persists, then continues)
+bash "$CLAUDE_PLUGIN_ROOT/scripts/sync.sh" --enable watch,headroom --disable caveman
+#    or include everything this run:   --all
+#    or base assets only this run:     --base-only
+
+# 3. preview the resulting plan — prints every command, executes nothing
 bash "$CLAUDE_PLUGIN_ROOT/scripts/sync.sh" --dry-run
 
-# 2. state report only — what's present vs missing, current versions
-bash "$CLAUDE_PLUGIN_ROOT/scripts/sync.sh" --check
-
-# 3. full sync — add missing marketplaces, install missing plugins, update all
+# 4. full sync — add missing marketplaces, install selected plugins, update all
 bash "$CLAUDE_PLUGIN_ROOT/scripts/sync.sh"
 ```
+
+After `--check`, **ask the user which optional/extra assets they want**, then run
+`--enable a,b --disable c` before the full sync. Base assets always install.
 
 If `$CLAUDE_PLUGIN_ROOT` is unset (skill loaded as `sync-extensions@skills-dir`),
 use the absolute path instead:
@@ -41,8 +64,10 @@ use the absolute path instead:
 - **Marketplaces**: adds any listed marketplace not in
   `~/.claude/plugins/known_marketplaces.json`, then `marketplace update` to
   refresh metadata.
-- **Plugins**: for each manifest plugin, `install <name>@<marketplace>` if
-  absent (checked against `installed_plugins.json`), else `update <name>`.
+- **Plugins**: for each manifest plugin that is *included* by its priority +
+  selection, `install <name>@<marketplace>` if absent (checked against
+  `installed_plugins.json`), else `update <name>`. Deselected optional/extra
+  plugins are reported as `[skipped:<priority>]` and their basic-setup is skipped.
 - **Basic setup (caveman, karpathy)** — runs after install/update:
   - **caveman**: re-runs `src/hooks/install.sh` (idempotent — wires SessionStart +
     UserPromptSubmit hooks and statusline badge into `settings.json`, skips if
@@ -50,10 +75,13 @@ use the absolute path instead:
     level `full`. Existing level is kept, not overwritten.
   - **karpathy**: verifies the `karpathy-guidelines` skill dir exists in the
     install path (the plugin auto-loads it; no mutation needed).
-- **Standalone skills**: runs `npx skills@latest update` if a lock exists;
-  otherwise re-adds each repo. If the CLI lacks an `update` subcommand it prints
-  the manual `add` commands.
-- **Report**: prints installed plugin versions at the end.
+- **Standalone skills**: adds each *included* repo not yet in the lock, then runs
+  `npx skills@latest update` to refresh tracked ones. Deselected repos are skipped
+  (already-installed ones are kept — remove manually if desired).
+- **Report**: prints installed plugin versions, then a **verification summary** —
+  a per-asset table (priority · action · state) plus collected warnings. The
+  script exits non-zero only if a **base** asset fails; optional/extra failures
+  (e.g. offline) are tolerated.
 
 ## After running
 
@@ -68,7 +96,11 @@ use the absolute path instead:
   is already in `known_marketplaces.json` the script skips it (no prompt).
 - superpowers is intentionally sourced from the official
   `claude-plugins-official` marketplace, not `obra/superpowers` directly.
-- Standalone-skill updates need network + `npx`; offline runs will fail that
-  section only — plugin sync still completes.
+- Standalone-skill updates need network + `npx`; offline runs (or missing Node)
+  skip that section with a warning — plugin sync still completes.
+- **Cross-platform**: runs on Linux, macOS (incl. Apple Silicon — searches
+  `/opt/homebrew/bin` and npm-global for the `headroom` CLI), and Windows via Git
+  Bash/WSL. Honors `CLAUDE_CONFIG_DIR`; tolerates paths containing spaces.
 - To add a new plugin: append to `manifest.json` `marketplaces` (if new repo) and
-  `plugins`. To add a standalone skill: append to `standalone_skills.repos`.
+  `plugins` (with a `priority`). To add a standalone skill: append to
+  `standalone_skills.repos` (give it a `name` + `priority`).

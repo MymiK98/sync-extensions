@@ -1,5 +1,5 @@
 {
-  "_comment": "Canonical list of Claude Code plugins + standalone skills that sync-extensions keeps installed and up to date. Edit this file to add/remove items, then run the skill.",
+  "_comment": "Canonical list of Claude Code plugins + standalone skills that sync-extensions keeps installed and up to date. Each asset has a 'priority': 'base' = always installed (mandatory); 'optional'/'extra' = installed only when selected. For optional/extra, 'default' sets whether it is on before the user picks (optional defaults true, extra defaults false). User selections persist in $CLAUDE_CONFIG_DIR/.sync-extensions-selection.json (managed via sync.sh --enable/--disable). Edit this file to add/remove items or change priorities, then run the skill.",
   "marketplaces": [
     { "name": "karpathy-skills", "repo": "forrestchang/andrej-karpathy-skills" },
     { "name": "caveman", "repo": "JuliusBrussee/caveman" },
@@ -9,19 +9,19 @@
     { "name": "headroom-marketplace", "repo": "chopratejas/headroom" }
   ],
   "plugins": [
-    { "name": "andrej-karpathy-skills", "marketplace": "karpathy-skills", "provides": "karpathy-guidelines" },
-    { "name": "caveman", "marketplace": "caveman", "provides": "caveman" },
-    { "name": "watch", "marketplace": "claude-video", "provides": "claude-video" },
-    { "name": "understand-anything", "marketplace": "understand-anything", "provides": "understand-anything" },
-    { "name": "skill-creator", "marketplace": "claude-plugins-official", "provides": "skill-creator" },
-    { "name": "headroom", "marketplace": "headroom-marketplace", "provides": "headroom" }
+    { "name": "skill-creator", "marketplace": "claude-plugins-official", "provides": "skill-creator", "priority": "base" },
+    { "name": "andrej-karpathy-skills", "marketplace": "karpathy-skills", "provides": "karpathy-guidelines", "priority": "base" },
+    { "name": "caveman", "marketplace": "caveman", "provides": "caveman", "priority": "optional", "default": true },
+    { "name": "understand-anything", "marketplace": "understand-anything", "provides": "understand-anything", "priority": "optional", "default": true },
+    { "name": "watch", "marketplace": "claude-video", "provides": "claude-video", "priority": "extra", "default": false },
+    { "name": "headroom", "marketplace": "headroom-marketplace", "provides": "headroom", "priority": "extra", "default": false }
   ],
   "standalone_skills": {
     "cli": "skills",
-    "note": "Installed via the vercel-labs 'skills' CLI (npx skills@latest). Tracked in ~/.agents/.skill-lock.json.",
+    "note": "Installed via the vercel-labs 'skills' CLI (npx skills@latest). Tracked in ~/.agents/.skill-lock.json. Each repo carries its own priority.",
     "repos": [
-      { "repo": "mattpocock/skills", "skills": ["grill-me", "grill-with-docs", "handoff", "improve-codebase-architecture"] },
-      { "repo": "vercel-labs/skills", "skills": ["find-skills"] }
+      { "name": "find-skills", "repo": "vercel-labs/skills", "skills": ["find-skills"], "priority": "base" },
+      { "name": "mattpocock-skills", "repo": "mattpocock/skills", "skills": ["grill-me", "grill-with-docs", "handoff", "improve-codebase-architecture"], "priority": "optional", "default": true }
     ]
   }
 }

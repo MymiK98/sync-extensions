@@ -21,6 +21,25 @@ say(){ printf '\n\033[1m%s\033[0m\n' "$*"; }
 ok(){ printf '  \033[32m✓\033[0m %s\n' "$*"; }
 warn(){ printf '  \033[33m!\033[0m %s\n' "$*"; }
 
+detect_os() { # -> linux | macos | windows
+  case "${OSTYPE:-$(uname -s 2>/dev/null)}" in
+    darwin*|Darwin*) echo macos ;;
+    msys*|cygwin*|mingw*|MINGW*|MSYS*|win32) echo windows ;;
+    *) echo linux ;;
+  esac
+}
+
+# safe_link <link> <symlink_target> <copy_source>: symlink, falling back to a
+# recursive copy from <copy_source> where symlinks are unsupported (Windows).
+safe_link() {
+  local link="$1" target="$2" src="$3"
+  if ln -s "$target" "$link" 2>/dev/null; then return 0; fi
+  warn "symlink unsupported here — copying instead (edits won't auto-track the repo)"
+  cp -R "$src" "$link"
+}
+
+OS="$(detect_os)"
+
 # ---------- preflight ----------
 say "preflight"
 MISS=0
@@ -51,11 +70,11 @@ if [ -d "$SEEDS" ]; then
   else
     cp "$SEEDS/.skill-lock.json" "$AGENTS_DIR/.skill-lock.json"; ok ".skill-lock.json seeded"
   fi
-  # link standalone skills into ~/.claude/skills
+  # link standalone skills into ~/.claude/skills (copy fallback on Windows)
   for d in "$AGENTS_DIR"/skills/*/; do
     name="$(basename "$d")"; link="$SKILLS_DIR/$name"
     if [ -L "$link" ] || [ -e "$link" ]; then ok "link $name exists"
-    else ln -s "../../.agents/skills/$name" "$link"; ok "linked $name"; fi
+    else safe_link "$link" "../../.agents/skills/$name" "$AGENTS_DIR/skills/$name"; ok "linked $name"; fi
   done
 fi
 
@@ -64,6 +83,12 @@ if [ "$DO_SYNC" = "1" ] && [ -f "$SKILLS_DIR/sync-extensions/scripts/sync.sh" ];
   say "running sync-extensions full sync"
   echo "  NOTE: 'claude plugin marketplace add' may prompt to trust each new repo"
   echo "        (one-time, ~5 approvals on a fresh machine)."
+  case "$OS" in
+    macos)   echo "  NOTE: on Apple Silicon, ensure Homebrew's bin (/opt/homebrew/bin) and"
+             echo "        ~/.local/bin are on PATH so the headroom CLI resolves." ;;
+    windows) echo "  NOTE: on Windows, run this under Git Bash or WSL. Symlinks fall back"
+             echo "        to copies unless Developer Mode is enabled." ;;
+  esac
   bash "$SKILLS_DIR/sync-extensions/scripts/sync.sh"
 else
   say "skipped sync (--no-sync or sync-extensions not linked)"
