@@ -67,10 +67,11 @@ warehouse entries):
 | Source repo | Asset | Mechanism |
 |---|---|---|
 | `JuliusBrussee/caveman` | caveman (+ hooks, statusline, level=full) | plugin |
-| `anthropics/claude-plugins-official` | superpowers, skill-creator | plugin |
+| `anthropics/claude-plugins-official` | skill-creator | plugin |
 | `Lum1104/Understand-Anything` | understand-anything | plugin |
 | `forrestchang/andrej-karpathy-skills` | karpathy-guidelines | plugin |
 | `bradautomates/claude-video` | watch (claude-video) | plugin |
+| `chopratejas/headroom` | headroom (token-compression hooks + CLI) | plugin |
 | `mattpocock/skills` | grill-me, grill-with-docs, handoff, improve-codebase-architecture | standalone |
 | `vercel-labs/skills` | find-skills | standalone |
 
@@ -81,6 +82,10 @@ To change the payload, edit `skills/sync-extensions/manifest.json`, run
 - **caveman**: idempotent hook installer (SessionStart + UserPromptSubmit hooks,
   statusline badge in `settings.json`) + ensures `~/.claude/.caveman-active=full`.
 - **karpathy**: verifies the `karpathy-guidelines` skill is present (auto-loads).
+- **headroom**: ensures the `headroom` CLI is installed (`pip install
+  "headroom-ai[all]"`) and symlinked onto PATH (`~/.local/bin`), so the plugin's
+  SessionStart/PreToolUse hook (`headroom init hook ensure`) auto-initializes the
+  runtime each session.
 
 ## Prerequisites
 - [Claude Code](https://claude.com/claude-code) (`claude` on PATH)
@@ -104,6 +109,7 @@ claude-skill-warehouse/
 
 ## Gotchas
 - **Marketplace trust prompts**: `claude plugin marketplace add` asks to trust
-  each new repo — one-time, ~5 approvals on a fresh machine.
-- **superpowers** is sourced from the official marketplace, not `obra/superpowers`.
+  each new repo — one-time, ~6 approvals on a fresh machine.
+- **headroom** pulls a large Python dependency tree (torch, transformers, …) on
+  first install; budget a few minutes. Needs `~/.local/bin` on PATH.
 - Standalone-skill updates need network + `npx`.

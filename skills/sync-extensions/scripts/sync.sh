@@ -71,7 +71,7 @@ mq "[print(p['name'],p['marketplace']) for p in d['plugins']]" | while read -r n
   fi
 done
 
-# ---------- 2b. basic setup (caveman, karpathy) ----------
+# ---------- 2b. basic setup (caveman, karpathy, headroom) ----------
 echo
 echo "## basic setup"
 
@@ -105,6 +105,44 @@ if [ -n "$KP_PATH" ] && [ -d "$KP_PATH/skills/karpathy-guidelines" ]; then
   echo "  karpathy: skill 'karpathy-guidelines' present [ok]"
 else
   echo "  [warn] karpathy skill not found (path: ${KP_PATH:-none}/skills/karpathy-guidelines)"
+fi
+
+# headroom: ensure the 'headroom' CLI is on PATH so the plugin's SessionStart/
+# PreToolUse hook ('headroom init hook ensure') can auto-init the runtime.
+if command -v headroom >/dev/null 2>&1; then
+  echo "  headroom: CLI present ($(headroom --version 2>/dev/null | head -1)) [ok]"
+else
+  echo "  headroom: CLI missing -> installing (so init hook works)"
+  if [ "$MODE" = "full" ]; then
+    if command -v pipx >/dev/null 2>&1 && pipx install "headroom-ai[all]" 2>/dev/null; then
+      echo "  headroom: installed via pipx"
+    elif "$PY" -m pip install --user "headroom-ai[all]" 2>/dev/null; then
+      echo "  headroom: installed via pip --user"
+    elif command -v npm >/dev/null 2>&1 && npm install -g headroom-ai 2>/dev/null; then
+      echo "  headroom: installed via npm -g"
+    else
+      echo "  [warn] headroom auto-install failed — install manually:"
+      echo "         pip install \"headroom-ai[all]\"   (or npm install -g headroom-ai)"
+    fi
+    # pip --user puts the script under site user-base/bin (often off PATH).
+    # Symlink it into ~/.local/bin (commonly on PATH) so bare 'headroom' resolves.
+    if ! command -v headroom >/dev/null 2>&1; then
+      UB="$("$PY" -m site --user-base 2>/dev/null)"
+      if [ -n "$UB" ] && [ -x "$UB/bin/headroom" ]; then
+        mkdir -p "$HOME/.local/bin"
+        ln -sf "$UB/bin/headroom" "$HOME/.local/bin/headroom"
+        echo "  headroom: linked $UB/bin/headroom -> ~/.local/bin/headroom"
+      fi
+    fi
+    hash -r 2>/dev/null || true
+    if command -v headroom >/dev/null 2>&1; then
+      echo "  headroom: on PATH [ok] — init hook will auto-run next session"
+    else
+      echo "  [warn] headroom not on PATH — add ~/.local/bin (or $UB/bin) to PATH"
+    fi
+  else
+    echo "+ pip install \"headroom-ai[all]\"   (skipped in $MODE)"
+  fi
 fi
 
 # ---------- 3. standalone skills (vercel skills CLI) ----------
